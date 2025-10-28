@@ -4,19 +4,19 @@ const express = require('express');
 const app = express();
 
 
-app.use("/admin", adminAuth);
-
-app.get("/user", userAuth, (req,res) => {
-    res.send("All Data Sent");
+app.get("/getUserData", (req,res) => {
+    try {
+        throw new Error("asdasd");
+        res.send("User Data Sent")
+    }catch(err) {
+        res.status(500).send("There's new error")
+    }
 })
-
-app.get("/admin/getAllData", (req,res) => {
-    res.send("All Data Sent");
+app.use("/", (err, req,res,next) => {
+    if(err){
+        res.status(500).send("something went wrong");
+    }
 })
-app.get("/admin/deleteUser", (req,res) => {
-    res.send("Deleted a user");
-})
-
 
 
 app.listen(3000 , () => {
