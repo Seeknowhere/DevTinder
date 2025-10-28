@@ -4,7 +4,7 @@
   "description": "tinder for devs",
   "main": "index.js",
   "scripts": {
-    "dev" : "nodemon src/app.js"
+    "dev": "nodemon src/app.js"
   },
   "keywords": [
     "nodejs",
@@ -14,6 +14,7 @@
   "author": "Shaira Mallari",
   "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "mongoose": "^8.19.2"
   }
 }
