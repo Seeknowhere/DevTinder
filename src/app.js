@@ -2,12 +2,25 @@ const express = require('express');
 
 const app = express();
 
-app.use("/", (req,res) => {
-    res.send("Hello from the server")
+
+app.use("/admin", (req,res,next) => {
+    console.log("admin authorization is checked!")
+    const token = 'xyz';
+    const isAuthorized = token === 'xyz';
+
+    if(!isAuthorized){
+        res.status(401).send("Unauthorized");
+    }else{
+        next();
+    }
 })
-app.use("/hello", (req,res) => {
-    res.send("Hello from the server")
+app.get("/admin/getAllData", (req,res) => {
+    res.send("All Data Sent");
 })
+app.get("/admin/deleteUser", (req,res) => {
+    res.send("Deleted a user");
+})
+
 
 
 app.listen(3000 , () => {
