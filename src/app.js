@@ -1,13 +1,21 @@
-const { adminAuth, userAuth } = require("./middlewares/auth.js");
 const express = require("express");
+const bcrypt = require('bcrypt');
 const connectDB = require("./config/database");
+const validation = require('./utils/validation');
 const User = require("./models/user");
 const app = express();
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
+  const {firstName , lastName, userName,emailId, password,age} = req.body;
+  validation(req);
+  const passwordHash = await bcrypt.hash(password,10);
+
+  const user = new User({
+    firstName, lastName, userName, emailId, password:passwordHash,age
+  });
+  
 
   try {
     await user.save();
@@ -44,11 +52,25 @@ app.delete("/user", async(req,res)=>{
         res.status(404).send("not found");
     }
 })
-app.patch("/user", async(req,res) => {
-    const firstName = req.body.firstName;
+
+
+app.patch("/user/:userId", async(req,res) => {
+
+    const userId = req.params?.userId;
     const body = req.body;
+    const ALLOWED_UPDATES= ["photoUrl","about","gender","age","skills"]
+
+    
     try{
-    const users = await User.findOneAndUpdate({firstName:firstName}, body,{
+    const isUpdateAllowed = Object.keys(body).every((k) => {
+      return ALLOWED_UPDATES.includes(k)
+    })
+
+    if(!isUpdateAllowed) {
+      throw new Error("Update not allowed");
+    }
+
+    const users = await User.findOneAndUpdate({_id:userId}, body,{
       returnDocument:"after",
       runValidators:true
     })
