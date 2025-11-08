@@ -1,6 +1,6 @@
 const validator = require('validator');
 
-const validation = (req) => {
+const validateSignup = (req) => {
     const {password} = req.body;
 
     if(!validator.isStrongPassword(password)){
@@ -8,4 +8,4 @@ const validation = (req) => {
     }
 }
 
-module.exports = validation;
+module.exports = validateSignup;
