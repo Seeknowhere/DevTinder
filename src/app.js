@@ -1,12 +1,15 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser")
 const connectDB = require("./config/database");
-const validation = require("./utils/validation");
 const User = require("./models/user");
 const validateSignup = require("./utils/validation");
 const app = express();
+const SECRET_KEY = "MySecretKey";
 
 app.use(express.json());
+app.use(cookieParser())
 
 app.post("/signup", async (req, res) => {
   const { firstName, lastName, userName, emailId, password, age } = req.body;
@@ -29,31 +32,70 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.post("/login"), async (req,res) => {
-  const { userName, emailId, password} = req.body;
+app.post("/login", async (req, res) => {
+  const { userName, emailId, password } = req.body;
   try {
     let account;
+
     //check if username and emailId is valid
-    if(userName){
-      account = await User.findOne({userName})
-    } else if(emailId) {
-      account = await User.findOne({emailId})
+    if (userName) {
+      account = await User.findOne({ userName });
+    } else if (emailId) {
+      account = await User.findOne({ emailId });
     } else {
-      throw new Error("Please provide either email or username")
+      throw new Error("Please provide either email or username");
     }
 
-
-    //check if password is valid
-    const isPasswordValid = await bcrypt.compare(password, account.password);
-    if(!isPasswordValid){
-      throw new Error("Password is incorrect")
+    if (account) {
+      //check if password is valid
+      const isPasswordValid = await bcrypt.compare(password, account.password);
+      if (isPasswordValid) {
+        //create a JWT Token
+        const token =  await jwt.sign(
+          {
+            userId: account._id,
+            emailId: account.emailId,
+          },
+          SECRET_KEY,
+          { expiresIn: "1h" }
+        );
+        //send token as a cookie
+        res.cookie("token", token, {
+          // httpOnly: true,
+          // // secure: true,
+          // sameSite: "strict"
+         
+        });
+        res.status(200).json({ message: "Login successful"});
+      } else {
+        throw new Error("Password is incorrect");
+      }
+    } else {
+      throw new Error("Account doesn't exist. Please sign up");
     }
-    res.send("Login successful");
-  }catch(err){
-    res.status(400).send("Login Failed:" + err.message)
+  } catch (err) {
+    res.status(400).send("Login Failed: " + err.message);
   }
-}
+});
 
+app.get("/profile", async(req,res) => {
+ 
+  try{
+     const token = req.cookies.token;
+    if(!token){
+      throw new Error("Invalid Token")
+    }
+    const decoded = await jwt.verify(token,SECRET_KEY)
+    const  user = await User.findById(decoded.userId);
+    if(!user){
+      throw new Error("User not Found")
+    }
+    res.send(`Welcome <b>${user.firstName}</b>!!!`);
+  }catch(err){
+    res.status(401).send("Invalid or expired token " + err.message)
+  }
+  
+})
 app.get("/feed", async (req, res) => {
   try {
     const users = await User.find({});
@@ -107,24 +149,22 @@ app.patch("/user/:userId", async (req, res) => {
   }
 });
 
-app.patch("/resetPassword", async(req,res) => {
+app.patch("/resetPassword", async (req, res) => {
   const { emailId, password, newPassword } = req.body;
   try {
-    const account = await User.findOne({emailId})
+    const account = await User.findOne({ emailId });
     const isPasswordValid = await bcrypt.compare(password, account.password);
-    if(!isPasswordValid){
+    if (!isPasswordValid) {
       throw new Error("Password is incorrect");
-    }else{
+    } else {
       const newHashPassword = bcrypt.hash(newPassword, 10);
       account.password = newHashPassword;
-      res.send("You can now try your new password")
+      res.send("You can now try your new password");
     }
-
-  }catch(err){ 
-    res.status(400).send("Reset Failed"+ err.message)
-
+  } catch (err) {
+    res.status(400).send("Reset Failed" + err.message);
   }
-})
+});
 
 connectDB()
   .then(() => {
