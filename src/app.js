@@ -4,11 +4,16 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser")
 const connectDB = require("./config/database");
 const User = require("./models/user");
+const userAuth = require('./middlewares/auth')
 const validateSignup = require("./utils/validation");
 const app = express();
-const SECRET_KEY = "MySecretKey";
 
-app.use(express.json());
+require('dotenv').config();
+const PORT = process.env.PORT || 3000;
+const SECRET_KEY = process.env.SECRET_KEY;
+
+
+app.use(express.json());  
 app.use(cookieParser())
 
 app.post("/signup", async (req, res) => {
@@ -48,17 +53,10 @@ app.post("/login", async (req, res) => {
 
     if (account) {
       //check if password is valid
-      const isPasswordValid = await bcrypt.compare(password, account.password);
+      const isPasswordValid = User.validatePassword(password);
       if (isPasswordValid) {
         //create a JWT Token
-        const token =  await jwt.sign(
-          {
-            userId: account._id,
-            emailId: account.emailId,
-          },
-          SECRET_KEY,
-          { expiresIn: "1h" }
-        );
+        const token = User.createJWT();
         //send token as a cookie
         res.cookie("token", token, {
           // httpOnly: true,
@@ -71,31 +69,23 @@ app.post("/login", async (req, res) => {
         throw new Error("Password is incorrect");
       }
     } else {
-      throw new Error("Account doesn't exist. Please sign up");
+      throw new Error("Account not found. Check typos or just sign up");
     }
   } catch (err) {
     res.status(400).send("Login Failed: " + err.message);
   }
 });
 
-app.get("/profile", async(req,res) => {
+app.get("/profile", userAuth, async(req,res) => {
  
   try{
-     const token = req.cookies.token;
-    if(!token){
-      throw new Error("Invalid Token")
-    }
-    const decoded = await jwt.verify(token,SECRET_KEY)
-    const  user = await User.findById(decoded.userId);
-    if(!user){
-      throw new Error("User not Found")
-    }
-    res.send(`Welcome <b>${user.firstName}</b>!!!`);
+    res.send(`Welcome <b>${req.user.firstName}</b>!!!`);
   }catch(err){
     res.status(401).send("Invalid or expired token " + err.message)
   }
   
 })
+
 app.get("/feed", async (req, res) => {
   try {
     const users = await User.find({});
@@ -149,11 +139,12 @@ app.patch("/user/:userId", async (req, res) => {
   }
 });
 
-app.patch("/resetPassword", async (req, res) => {
+app.patch("/resetPassword", userAuth,  async (req, res) => {
   const { emailId, password, newPassword } = req.body;
   try {
     const account = await User.findOne({ emailId });
-    const isPasswordValid = await bcrypt.compare(password, account.password);
+    const isPasswordValid =  User.validatePassword(password);
+    
     if (!isPasswordValid) {
       throw new Error("Password is incorrect");
     } else {
@@ -166,10 +157,15 @@ app.patch("/resetPassword", async (req, res) => {
   }
 });
 
+app.post("/logout" , async (req,res) => {
+  res.clearCookie("token");
+  res.status(200).send("Logged out successfully");
+})
+
 connectDB()
   .then(() => {
     console.log("DB is connected");
-    app.listen(3000, () => {
+    app.listen(PORT, () => {
       console.log("Server is listening on port 3000");
     });
   })
