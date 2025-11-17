@@ -8,4 +8,11 @@ const validateSignup = (req) => {
     }
 }
 
-module.exports = validateSignup;
+const validateEditProfile = (req) => {
+    const allowedEditFields = [ "firstName", "lastName" , "age","skills"];
+
+    const isValidOperation =  Object.keys(req.body).every(field => allowedEditFields.includes(field));
+
+    return isValidOperation;
+}
+module.exports = {validateSignup , validateEditProfile};
