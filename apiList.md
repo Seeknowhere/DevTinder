@@ -12,7 +12,7 @@ profileRouter
 connectionRequestRouter
 -POST /request/send/like/:userId
 -POST /request/send/pass/:userId
--POST /request/review/accepted/:requestId
+-POST /request/review/matched/:requestId
 -POST /request/review/rejected/:requestId
 
 userRouter

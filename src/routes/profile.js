@@ -38,7 +38,7 @@ profileRouter.patch("/profile/edit", userAuth, async(req,res) => {
 profileRouter.patch("/resetPassword", userAuth, async (req, res) => {
   const { emailId, password, newPassword } = req.body;
   try {
-    const account = awa it User.findOne({ emailId });
+    const account = await User.findOne({ emailId });
     const isPasswordValid = User.validatePassword(password);
 
     if (!isPasswordValid) {
