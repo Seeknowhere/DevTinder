@@ -4,18 +4,28 @@ authRouter
 -POST /login
 -POST /logout
 
-profileRouter
--GET /profile/view
--PATCH /profile/edit
--PATCH /profile/password
+## profileRouter
+GET    /profile/me                # view my own profile
+PATCH  /profile/me                # update profile fields
+PATCH  /profile/me/password       # change password
+PATCH  /profile/me/avatar         # upload/change avatar
 
-connectionRequestRouter
--POST /request/send/like/:userId
--POST /request/send/pass/:userId
--POST /request/review/matched/:requestId
--POST /request/review/rejected/:requestId
+## User Browsing APIs
+GET    /users/feed                # recommended profiles(swiping feed)
+GET    /users/:userId             # view someone else’s profile
 
-userRouter
--GET /user/connections
--GET /user/requests/received
--GET /user/feed -gets you the profiles of other users in the platform
+
+
+## connectionRequestRouter
+POST   /connections/like/:userId
+POST   /connections/pass/:userId
+POST   /connections/superlike/:userId     (optional feature)
+
+
+## match APIs (Mutual likes)
+GET    /matches                   # list all my matches
+GET    /matches/:matchId          # details of a specific match
+DELETE /matches/:matchId          # unmatch a person
+   
+
+
