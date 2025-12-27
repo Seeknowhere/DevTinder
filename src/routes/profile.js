@@ -1,6 +1,6 @@
 const express = require('express');
 const profileRouter = express.Router();
-
+const bcrypt = require('bcrypt');
 const userAuth = require('../middlewares/auth');
 const User = require("../models/user");
 const { validateEditProfile } = require('../utils/validation');
@@ -9,7 +9,7 @@ profileRouter.get("/profile/view", userAuth, async(req,res) => {
  
 
   try{
-    res.send(`Welcome <b>${req.user.firstName + " " + req.user.lastName}</b>!!!`);
+    res.json({data: req.user});
   }catch(err){
     res.status(401).send("Invalid or expired token " + err.message)
   }
@@ -26,7 +26,7 @@ profileRouter.patch("/profile/edit", userAuth, async(req,res) => {
     const loggedInUser = req.user;
     Object.keys(req.body).forEach((key) => (loggedInUser[key] = req.body[key]));
     
-    // await loggedInUser.save();
+    await loggedInUser.save();
     res.json({message: "Profile updated successfully", data:loggedInUser})
 
   }catch(err){
@@ -36,20 +36,25 @@ profileRouter.patch("/profile/edit", userAuth, async(req,res) => {
 })
 
 profileRouter.patch("/resetPassword", userAuth, async (req, res) => {
-  const { emailId, password, newPassword } = req.body;
+  const { oldPassword, newPassword } = req.body;
+  const loggedInUserId = req.user._id;
   try {
-    const account = await User.findOne({ emailId });
-    const isPasswordValid = User.validatePassword(password);
+    const account = await User.findById(loggedInUserId);
+    const isPasswordValid = await account.validatePassword(oldPassword);
 
     if (!isPasswordValid) {
-      throw new Error("Password is incorrect");
-    } else {
-      const newHashPassword = bcrypt.hash(newPassword, 10);
-      account.password = newHashPassword;
-      res.send("You can now try your new password");
-    }
+      throw new Error("Current password is incorrect");
+    } 
+
+    const newHashPassword = await bcrypt.hash(newPassword, 10);
+
+    account.password = newHashPassword;
+    await account.save();
+
+    return res.send("Password has been reset successfully");
+    
   } catch (err) {
-    res.status(400).send("Reset Failed" + err.message);
+    return res.status(500).send("Reset Failed" + err.message);
   }
 });
 

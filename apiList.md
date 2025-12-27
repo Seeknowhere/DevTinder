@@ -23,9 +23,9 @@ POST   /connections/superlike/:userId     (optional feature)
 
 
 ## match APIs (Mutual likes)
-GET    /matches                   # list all my matches
-GET    /matches/:matchId          # details of a specific match
-DELETE /matches/:matchId          # unmatch a person
+GET    user/matches                   # list all my matches
+GET    user/matches/:matchId          # details of a specific match
+PATCH  user/matches/unmatch/:matchId          # unmatch a person
    
 
 

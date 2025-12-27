@@ -15,8 +15,9 @@ const matchSchema = new Schema({
         default: "matched"
     }
 
-},{timestamps:true})
+},{timestamps:true});
 
-const Match = model("Match",matchSchema);
+
+const Match = model("match",matchSchema);
 
 module.exports = Match;

@@ -1,13 +1,12 @@
-const express = require('express');
+const express = require("express");
 const authRouter = express.Router();
 
-const {validateSignup, validateEditProfile} = require('../utils/validation');
-const bcrypt = require('bcrypt');
-const User = require('../models/user');
-
+const { validateSignup, validateEditProfile } = require("../utils/validation");
+const bcrypt = require("bcrypt");
+const User = require("../models/user");
 
 authRouter.post("/signup", async (req, res) => {
-  const { firstName, lastName, userName, emailId, password, age } = req.body;
+  const { firstName, lastName, username, emailId, password, age } = req.body;
 
   try {
     validateSignup(req);
@@ -15,7 +14,7 @@ authRouter.post("/signup", async (req, res) => {
     const user = new User({
       firstName,
       lastName,
-      userName,
+      username,
       emailId,
       password: passwordHash,
       age,
@@ -28,17 +27,17 @@ authRouter.post("/signup", async (req, res) => {
 });
 
 authRouter.post("/login", async (req, res) => {
-  const { userName, emailId, password } = req.body;
+  const { username, emailId, password } = req.body;
   try {
     let account;
 
     //check if username and emailId is valid
-    if (userName) {
-      account = await User.findOne({ userName });
+    if (username) {
+      account = await User.findOne({ username });
     } else if (emailId) {
       account = await User.findOne({ emailId });
     } else {
-      throw new Error("Please provide either email or username");
+      throw new Error("Please provide email address");
     }
 
     if (account) {
@@ -49,26 +48,25 @@ authRouter.post("/login", async (req, res) => {
         const token = await account.createJWT();
         //send token as a cookie
         res.cookie("token", token, {
-          // httpOnly: true,
-          // // secure: true,
-          // sameSite: "strict"
-         
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
         });
-        res.status(200).json({ message: "Login successful"});
+        res.status(200).json({ message: "Login successful", data: account });
       } else {
-        throw new Error("Password is incorrect");
+        throw new Error("Password is incorrect!Please try again!");
       }
     } else {
-      throw new Error("Account not found. Check typos or just sign up");
+      throw new Error("Invalid Credentials");
     }
   } catch (err) {
-    res.status(400).send("Login Failed: " + err.message);
+    res.status(400).send(err.message);
   }
 });
 
-authRouter.post("/logout" , async (req,res) => {
+authRouter.post("/logout", async (req, res) => {
   res.clearCookie("token");
   res.status(200).send("Logged out successfully");
-})
+});
 
 module.exports = authRouter;

@@ -14,12 +14,10 @@ const userSchema = Schema({
     type: String,
     maxLength: 50
   },
-  userName: {
+  username: {
     type: String,
     unique: true,
-    minLength:3,
     maxLength:20,
-    required: true,
     trim:true,
     match:/^[a-zA-Z][a-zA-Z0-9_]+$/
   },
@@ -48,11 +46,13 @@ const userSchema = Schema({
   },
   age: {
     type: Number,
+    required:true,
     min: 18,
     max:100
   },
   gender: {
     type: String,
+    lowercase:true,
     validate(value) {
       if (!["male", "female", "others"].includes(value)) {
         throw new Error("Gender data is not valid");
@@ -62,7 +62,7 @@ const userSchema = Schema({
   photoUrl: {
     type: String,
     default:
-      "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541",
+      "https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png",
     validate(value){
       if(!validator.isURL(value)){
         throw new Error("Sorry, photo not a valid uri format")
